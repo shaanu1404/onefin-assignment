@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import get_all_collections
+from .views import get_movies_list
 
 urlpatterns = [
-    path('collection/', get_all_collections)
+    path('movies/', get_movies_list)
 ]

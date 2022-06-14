@@ -12,10 +12,13 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = environ.Env()
+environ.Env.read_env()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
@@ -143,3 +146,7 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.SlidingToken',),
     'SLIDING_TOKEN_LIFETIME': timedelta(hours=10),
 }
+
+
+MOVIE_DB_USERNAME = env('MOVIE_DB_USERNAME')
+MOVIE_DB_PASSWORD = env('MOVIE_DB_PASSWORD')
