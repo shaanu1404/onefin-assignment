@@ -4,8 +4,6 @@ def get_favorite_genres(collections):
         for movie in collection.movies.all():
             all_genres.extend(movie.genres.split(','))
 
-    freq = {}
-    for genre in set(all_genres):
-        freq[genre] = all_genres.count(genre)
-
-    print(freq)
+    freq = [(genre, all_genres.count(genre)) for genre in set(all_genres)]
+    freq = list(sorted(freq, key=lambda x: x[1], reverse=True))[:3]
+    return list(map(lambda x: x[0], freq))
