@@ -5,13 +5,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import (
     HTTP_200_OK,
-    HTTP_500_INTERNAL_SERVER_ERROR,
     HTTP_201_CREATED,
-    HTTP_400_BAD_REQUEST
+    HTTP_400_BAD_REQUEST,
+    HTTP_204_NO_CONTENT
 )
 import requests as Requests
 from .models import Collection
-from .serializers import CollectionSerializer, CreateCollectionSerializer
+from .serializers import DataCollectionSerializer, CollectionSerializer
 from .utils import get_favorite_genres
 
 
@@ -55,7 +55,7 @@ def get_collection_list(request):
     if request.method == 'GET':
         collections = Collection.objects.filter(user=request.user)
         favorite_genres = get_favorite_genres(collections)
-        serializer = CollectionSerializer(collections, many=True)
+        serializer = DataCollectionSerializer(collections, many=True)
         return Response({
             'is_success': True,
             'data': {
@@ -63,8 +63,9 @@ def get_collection_list(request):
                 'favourite_genres': ",".join(favorite_genres)
             }
         }, status=200)
+
     elif request.method == 'POST':
-        serializer = CreateCollectionSerializer(
+        serializer = CollectionSerializer(
             data=request.data, context={'user': request.user})
 
         if not serializer.is_valid():
@@ -74,16 +75,40 @@ def get_collection_list(request):
         return Response({'collection_uuid': collection.uuid}, status=HTTP_201_CREATED)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'DELETE', 'PUT'])
 @permission_classes([IsAuthenticated])
 def get_collection(request, collection_uuid):
     """
-    GET single collection by id
+    GET single collection by id or DELETE collection or PUT collection
     """
 
-    try:
-        collection = Collection.objects.get(uuid=collection_uuid)
-        serializer = CreateCollectionSerializer(collection)
-        return Response(serializer.data, status=HTTP_200_OK)
-    except Exception as e:
-        return Response({'error': str(e)}, status=HTTP_400_BAD_REQUEST)
+    if request.method == 'GET':
+        try:
+            collection = Collection.objects.get(uuid=collection_uuid)
+            serializer = CollectionSerializer(collection)
+            return Response(serializer.data, status=HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        try:
+            collection = Collection.objects.get(uuid=collection_uuid)
+            collection.delete()
+            return Response(status=HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response({'error': str(e)}, status=HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'PUT':
+
+        try:
+            collection = Collection.objects.get(uuid=collection_uuid)
+            serializer = CollectionSerializer(
+                instance=collection, data=request.data)
+
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+            serializer.save()
+            return Response({'message': 'Collection updated successfully'}, status=HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=HTTP_400_BAD_REQUEST)

@@ -9,14 +9,14 @@ class MovieSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class CollectionSerializer(serializers.ModelSerializer):
+class DataCollectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Collection
         fields = ('uuid', 'title', 'description')
 
 
-class CreateCollectionSerializer(serializers.ModelSerializer):
+class CollectionSerializer(serializers.ModelSerializer):
     movies = MovieSerializer(many=True)
 
     class Meta:
@@ -37,3 +37,19 @@ class CreateCollectionSerializer(serializers.ModelSerializer):
             added_movies.append(new_movie)
         collection.movies.set(added_movies)
         return collection
+
+    def update(self, instance, validated_data):
+        if "title" in validated_data:
+            instance.title = validated_data.get('title')
+        if "description" in validated_data:
+            instance.description = validated_data.get('description')
+        if "movies" in validated_data:
+            movies = validated_data.get('movies')
+            if len(movies) > 0:
+                added_movies = []
+                for movie in movies:
+                    new_movie, _ = Movie.objects.get_or_create(**movie)
+                    added_movies.append(new_movie)
+                instance.movies.set(added_movies)
+        instance.save()
+        return instance
